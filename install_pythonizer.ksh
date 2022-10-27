@@ -5,6 +5,8 @@
 #Author: Dudley Overbey
 #Date: 25 October 2022
 #Program: install_pythonizer
+#
+# updated to allow for different owner and group to be passed from command line
 
 if [ "${1}" = "-x" ]; then shift 1; set -x; DB="y"; typeset -ft $(typeset +f) ;fi
 
@@ -15,6 +17,24 @@ else
 	  unset ECHO
 fi
 
+PROG=`basename ${0}`
+
+ifHelp="${1}"
+case ${ifHelp} in
+    -[Hh][eE]*|-?)
+
+    print "Usage: ${PROG} full_path_to_pythonizer"
+    print "    example: ${PROG} /home/LoginID/Downloads/pythonizer-master_1.007.zip"
+    print "             enter version number or accept the default"
+    exit -1
+          ;;
+esac
+
+# change owner and group to position 1 and 2 or default to pndt
+# chown to 
+OWNER="${1:-pndt}"
+# chgrp to
+GROUP="${2:-pndt}"
 # save calling location
 OPWD="${PWD}"
 
@@ -58,8 +78,8 @@ ${ECHO} sudo mv pythonizer-master pythonizer_${ver}
 # create sym-link from pythonizer_version to pythonizer
 ${ECHO} sudo ln -s /usr/local/pythonizer_${ver}  /usr/local/pythonizer
 # change ownership and group to pndt:pndt
-##${ECHO} sudo chown -Rf pndt:pndt /usr/local/pythonizer_${ver} /usr/local/pythonizer
-${ECHO} sudo chown -Rf dudley:dudley /usr/local/pythonizer_${ver} /usr/local/pythonizer
+# to do - make the owner and group a variable
+${ECHO} sudo chown -Rf ${OWNER}:${GROUP} /usr/local/pythonizer_${ver} /usr/local/pythonizer
 # change permissions on pythonizer_version and pythonizer to 775
 ${ECHO} sudo chmod -R 775 /usr/local/pythonizer_${ver} /usr/local/pythonizer
 
@@ -77,9 +97,9 @@ fi
 # Check for perllib if not found try to install using sudo and remember to 
 if [ -f /usr/local/pythonizer/perllib ]
  then
-PLFVER=`awk -F"="  '/__version__/ {print $2}' /usr/local/pythonizer/perllib/__init__.py | sed "s/'//g"`
-PLPVER=`pip show perllib | awk -F":" '/Version/ {print $2}'`
-PLPYVER=`python3 -m pip show perllib | awk -F":" '/Version/ {print $2}'`
+    PLFVER=`awk -F"="  '/__version__/ {print $2}' /usr/local/pythonizer/perllib/__init__.py | sed "s/'//g"`
+    PLPVER=`pip show perllib | awk -F":" '/Version/ {print $2}'`
+    PLPYVER=`python3 -m pip show perllib | awk -F":" '/Version/ {print $2}'`
 fi
 ## update perllib
 pip install perllib -U
@@ -103,22 +123,23 @@ else
 fi
 
 # change ownership and group to pndt:pndt
-${ECHO} sudo chown -Rf pndt:pndt /usr/local/pythonizer_${ver} /usr/local/pythonizer
+${ECHO} sudo chown -Rf ${OWNER}:${GROUP} /usr/local/pythonizer_${ver} /usr/local/pythonizer
 # change permissions on pythonizer_version and pythonizer to 775
 ${ECHO} sudo chmod -R 775 /usr/local/pythonizer_${ver} /usr/local/pythonizer
 # change ownership and group to pndt:pndt
-${ECHO} sudo chown -Rf pndt:pndt ${HOME}/.local/lib/python*
+${ECHO} sudo chown -Rf ${OWNER}:${GROUP} ${HOME}/.local/lib/python*
 # change permissions on pythonizer_version and pythonizer to 775
 ${ECHO} sudo chmod -R 775 ${HOME}/.local/lib/python*
 
-##:: print "Displaying versions of perllib for pip, pypy, and python"
-##:: print "for global and local users"
-##:: pip show perllib
-##:: sudo show perllib
-##:: python -m pip show perllib
-##:: sudo python -m pip show perllib
-##:: pypy -m pip show perllib
-##:: sudo pypy -m pip show perllib
+print "Displaying versions of perllib for pip, pypy, and python"
+print "for global and local users"
+pip show perllib
+sudo show perllib
+python -m pip show perllib
+sudo python -m pip show perllib
+pypy -m pip show perllib
+sudo pypy -m pip show perllib
 
 # move back to where we came from
 cd ${OPWD}
+exit 0
